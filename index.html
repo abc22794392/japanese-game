@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>福隆（フーロン）観光クイズ＆ガイド</title>
+    <style>
+        :root {
+            --primary-color: #0077b6;
+            --secondary-color: #00b4d8;
+            --accent-color: #ffb703;
+            --bg-color: #f0f8ff;
+            --card-bg: #ffffff;
+            --text-color: #2b2d42;
+            --correct-color: #2a9d8f;
+            --wrong-color: #e76f51;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 550px;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: #e0e0e0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        .content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Home Screen */
+        .home-screen {
+            text-align: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .home-icon {
+            font-size: 4rem;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:hover {
+            background-color: #005f9e;
+        }
+
+        /* Quiz Screen */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-color);
+        }
+
+        .option-btn:hover {
+            border-color: var(--secondary-color);
+            background-color: #eef9ff;
+        }
+
+        .option-btn.correct {
+            background-color: #e8f5e9;
+            border-color: var(--correct-color);
+            color: var(--correct-color);
+            font-weight: bold;
+        }
+
+        .option-btn.wrong {
+            background-color: #ffebee;
+            border-color: var(--wrong-color);
+            color: var(--wrong-color);
+            font-weight: bold;
+        }
+
+        .explanation {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--secondary-color);
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .next-btn {
+            display: none;
+        }
+
+        /* Result Screen */
+        .result-screen {
+            text-align: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .score-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+
+        .result-message {
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="header">
+        <h1>🏖️ 福隆観光ガイド＆クイズ</h1>
+        <p>台湾東北角の魅力を学ぼう！</p>
+    </div>
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div class="content">
+        <!-- Start Screen -->
+        <div class="screen home-screen active" id="home-screen">
+            <div class="home-icon">🌊🚴‍♂️🍱</div>
+            <h2>福隆（フーロン）クイズへようこそ！</h2>
+            <p>美麗な黄金海岸、歴史あるトンネル、そして名物の駅弁！全10問のクイズで福隆の魅力を発見しましょう。</p>
+            <button class="btn" onclick="startGame()">ゲームスタート</button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div class="screen" id="quiz-screen">
+            <div>
+                <div class="quiz-header">
+                    <span id="question-number">第 1 問 / 10 問</span>
+                    <span id="score-counter">スコア: 0</span>
+                </div>
+                <div class="question-text" id="question-text">問題文がここに表示されます</div>
+                <div class="options-container" id="options-container">
+                    <!-- Options injected by JS -->
+                </div>
+                <div class="explanation" id="explanation">
+                    <!-- Explanation injected by JS -->
+                </div>
+            </div>
+            <button class="btn next-btn" id="next-btn" onclick="nextQuestion()">次の問題へ</button>
+        </div>
+
+        <!-- Result Screen -->
+        <div class="screen result-screen" id="result-screen">
+            <h2>結果発表</h2>
+            <div class="score-display" id="final-score">0 / 10</div>
+            <p class="result-message" id="result-message">お疲れ様でした！</p>
+            <button class="btn" onclick="startGame()">もう一度挑戦する</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        {
+            question: "福隆（フーロン）で最も有名なおすすめのB級グルメは何でしょう？",
+            options: ["小籠包", "福隆便当（駅弁）", "牛肉麺", "芒果冰（マンゴーかき氷）"],
+            correct: 1,
+            explanation: "「福隆便当」は昔ながらの駅弁で、滷肉（豚角煮）、煮卵、高麗菜、豆干などが詰まった非常に人気の高いグルメです。"
+        },
+        {
+            question: "旧草嶺トンネル（舊草嶺隧道）は、現在何として再利用されて観光客に人気ですか？",
+            options: ["サイクリングロード（自転車道）", "自動運転バス専用道", "ショッピングモール", "水族館"],
+            correct: 0,
+            explanation: "かつての鉄道トンネルを改装したサイクリングロードで、トンネル内では童謡『丟丟銅仔』の音楽が流れています。"
+        },
+        {
+            question: "旧草嶺トンネルを自転車で通り抜けると、新北市からどの県（市）に入りますか？",
+            options: ["台北市", "基隆市", "宜蘭県", "花蓮県"],
+            correct: 2,
+            explanation: "トンネル内に「新北市」と「宜蘭県」の県境があり、トンネルを抜けると宜蘭県頭城鎮に出ます。"
+        },
+        {
+            question: "毎年夏に福隆海水浴場で開催される、国際的な大型アートイベントは何ですか？",
+            options: ["福隆国際砂彫刻アートフェスティバル", "海洋ロックフェスティバル", "ランタンフェスティバル", "熱気球フェスティバル"],
+            correct: 0,
+            explanation: "「福隆國際沙雕藝術季（サンドアートフェス）」は毎年夏に開催され、世界中のアーティストが素晴らしい砂の彫刻作品を作り上げます。"
+        },
+        {
+            question: "福隆海水浴場の独特な地理的特徴として正しいものはどれですか？",
+            options: ["黒い火山砂の砂浜", "川と海に挟まれた内海と外海を持つ砂州", "一面の珊瑚礁海岸", "断崖絶壁の海岸"],
+            correct: 1,
+            explanation: "雙溪（雙渓川）の河口に位置し、黄金色の砂州によって内海と外海が形成されているのが特徴です。"
+        },
+        {
+            question: "陸地と福隆海水浴場の砂浜を結ぶ、美しく有名な橋の名前は何ですか？",
+            options: ["跨海大橋", "彩虹橋（レインボーブリッジ）", "情人橋", "關渡大橋"],
+            correct: 1,
+            explanation: "アーチ型の「彩虹橋（彩虹橋）」を渡ることで、砂浜側のビーチエリアへアクセスできます。"
+        },
+        {
+            question: "旧草嶺トンネルの吉次（福隆側）入口の上に掲げられている、歴史的な題字は何ですか？",
+            options: ["天下第一關", "制天險", "白雲飛處", "雄鎮蠻煙"],
+            correct: 1,
+            explanation: "福隆側のトンネル入口には「制天險」、宜蘭側の入口には「白雲飛處」という題字が刻まれています。"
+        },
+        {
+            question: "福隆海岸の美しい「黄金色」の砂浜の主な砂の質は何ですか？",
+            options: ["石英砂", "玄武岩砂", "貝殻砂", "泥炭"],
+            correct: 0,
+            explanation: "福隆の砂浜は非常に細かい「石英砂」で構成されており、水を含ませると固まりやすいため砂の彫刻に最適です。"
+        },
+        {
+            question: "福隆周辺で楽しめる人気のアウトドアアクティビティはどれですか？",
+            options: ["SUP（スタンドアップパドルボード）", "カヤック（シーカヤック）", "サイクリング", "上記すべて"],
+            correct: 3,
+            explanation: "福隆ではサイクリングだけでなく、川や海でのSUPやカヤックなど様々なマリンスポーツを楽しめます。"
+        },
+        {
+            question: "台北駅から福隆駅まで台鉄（台湾鉄道）の自強号に乗った場合、所要時間は約どれくらいですか？",
+            options: ["約 15 分", "約 1 時間〜1時間15分", "約 3 時間", "約 5 時間"],
+            correct: 1,
+            explanation: "台北駅から特急（自強号）に乗れば約1時間〜1時間15分で到着するため、日帰り旅行にピッタリです。"
+        }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let answered = false;
+
+    function startGame() {
+        currentQuestion = 0;
+        score = 0;
+        showScreen('quiz-screen');
+        loadQuestion();
+    }
+
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function loadQuestion() {
+        answered = false;
+        const q = quizData[currentQuestion];
+        
+        // Update UI
+        document.getElementById('question-number').innerText = `第 ${currentQuestion + 1} 問 / ${quizData.length} 問`;
+        document.getElementById('score-counter').innerText = `スコア: ${score}`;
+        document.getElementById('question-text').innerText = q.question;
+        
+        // Progress Bar
+        const progressPercentage = ((currentQuestion) / quizData.length) * 100;
+        document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
+
+        // Reset elements
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+        
+        const explanationEl = document.getElementById('explanation');
+        explanationEl.style.display = 'none';
+        
+        const nextBtn = document.getElementById('next-btn');
+        nextBtn.style.display = 'none';
+
+        // Render Options
+        q.options.forEach((optionText, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = optionText;
+            btn.onclick = () => selectOption(index, btn);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function selectOption(selectedIndex, selectedBtn) {
+        if (answered) return;
+        answered = true;
+
+        const q = quizData[currentQuestion];
+        const options = document.querySelectorAll('.option-btn');
+
+        if (selectedIndex === q.correct) {
+            selectedBtn.classList.add('correct');
+            score += 10;
+            document.getElementById('score-counter').innerText = `スコア: ${score}`;
+        } else {
+            selectedBtn.classList.add('wrong');
+            options[q.correct].classList.add('correct');
+        }
+
+        // Disable all options
+        options.forEach(btn => btn.style.pointerEvents = 'none');
+
+        // Show Explanation
+        const explanationEl = document.getElementById('explanation');
+        explanationEl.innerText = `💡 解説: ${q.explanation}`;
+        explanationEl.style.display = 'block';
+
+        // Show Next Button
+        const nextBtn = document.getElementById('next-btn');
+        if (currentQuestion < quizData.length - 1) {
+            nextBtn.innerText = '次の問題へ';
+        } else {
+            nextBtn.innerText = '結果を見る';
+        }
+        nextBtn.style.display = 'block';
+    }
+
+    function nextQuestion() {
+        currentQuestion++;
+        if (currentQuestion < quizData.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('progress-bar').style.width = '100%';
+        showScreen('result-screen');
+        
+        const maxScore = quizData.length * 10;
+        document.getElementById('final-score').innerText = `${score} / ${maxScore} 点`;
+
+        let message = "";
+        if (score === maxScore) {
+            message = "🏆 素晴らしい！あなたは福隆マスターです！次回はぜひ福隆へ旅行に出かけましょう！";
+        } else if (score >= 70) {
+            message = "🎉 おめでとうございます！福隆の魅力をかなり知っていますね！";
+        } else if (score >= 40) {
+            message = "👍 惜しい！もう少しで福隆通になれます。もう一度挑戦してみましょう！";
+        } else {
+            message = "🌊 福隆へ行ったことはありますか？クイズを通して魅力を覚えていきましょう！";
+        }
+        document.getElementById('result-message').innerText = message;
+    }
+</script>
+
+</body>
+</html>
